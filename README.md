@@ -48,3 +48,18 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+
+
+## От меня
+
+Устанавливать как обычное приложение react native expo
+
+Дополнительно реализовал вторую вкладку, в которой можно увидеть все маркеры, редактировать их а также добавлять новые.
+
+Всё ещё можно кликать на главной карте на карту и на маркеры, чтобы добавить маркеры, или редактировать их
+
+CSS я знаю плохо, поэтому я особо не настраивал стили.
+
+Пытался сделать передачу маркеров, как нибудь через useState в корневом элементе, 
+не получилось, пришлось делать через контекст и переменные в ссылке.
