@@ -1,32 +1,42 @@
 import React, {useContext} from 'react';
 import MapView from 'react-native-maps';
 import {StyleSheet, View, Text, Image, Pressable} from 'react-native';
-import {MarkerType} from "@/components/types";
-import {Link, useLocalSearchParams} from "expo-router";
+import {ImageType, MarkerType} from "@/components/types";
+import {Link, router, useLocalSearchParams} from "expo-router";
 import {Context} from "@/components/GlobalContext";
+import DbProvider from "@/components/DbProvider";
 
 type Props = {
-    markerIndex: number;
-    imageIndex: number;
+    image: ImageType;
+    marker: MarkerType|null;
+    setImages:(a:ImageType[])=>any;
 };
 
-export default function DeleteableImage({markerIndex, imageIndex}: Props) {
-    const {markers, setMarkers} = useContext(Context);
-    const marker = markers[markerIndex];
+export default function DeleteableImage({image, marker, setImages}: Props) {
+    const dbProvider: DbProvider = useContext(Context) as DbProvider;
 
-    const handleLongPress = (id: number) => {
-        const newImages = marker.images.filter((image, index)=> index != markerIndex);
-        setMarkers((markers: any) => markers.map((marker: any, index: any) =>
-            index == markerIndex
-                ? {...marker, images: newImages}
-                : marker
-        ));
+    const handleLongPress = async () => {
+        if(marker === null){
+            return;
+        }
+        await dbProvider.removeImage(image.id);
+
+        const i = await dbProvider.getImages(marker.id);
+
+        if(i === true){
+            router.replace({
+                pathname: '/DatabaseErrorPopup',
+            })
+        }else{
+            setImages(i);
+        }
+
 
     }
     return (
-        <Pressable onLongPress={() => handleLongPress(imageIndex)}>
+        <Pressable onLongPress={handleLongPress}>
             <Image
-                source={marker.images[imageIndex] ? marker.images[imageIndex] : require("../assets/images/godot_img.png")}
+                source={image.uri ? {uri:image.uri} : require("../assets/images/godot_img.png")}
                 style={styles.image}/>
         </Pressable>
     );

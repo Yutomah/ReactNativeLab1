@@ -1,33 +1,55 @@
-import React, {useContext} from 'react';
+import React, {useCallback, useContext, useEffect, useState} from 'react';
 import MapView from 'react-native-maps';
 import {StyleSheet, View, Image, FlatList, Text, Button, Pressable} from 'react-native';
 import {ImageSource} from "expo-image";
-import {MarkerType} from "@/components/types";
+import {MarkerType, ImageType} from "@/components/types";
 import * as ImagePicker from "expo-image-picker";
 import MarkerPreview from "@/components/MarkerPreview";
 import {Context} from "@/components/GlobalContext";
-import {router, useLocalSearchParams} from 'expo-router';
+import {router, useFocusEffect, useLocalSearchParams} from 'expo-router';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import DeleteableImage from "@/components/DeleteableImage";
+import DbProvider from "@/components/DbProvider";
 
 
 export default function MarkerPage() {
-    const {markers, setMarkers} = useContext(Context);
+    const dbProvider: DbProvider = useContext(Context) as DbProvider;
+    const [marker, setMarker] = useState<MarkerType|null>(null);
+    const [images, setImages] = useState<ImageType[]>([]);
+
     const {id} = useLocalSearchParams();
     const intId = ((id as unknown) as number);
-    const marker = markers[intId];
+    useFocusEffect(
+        useCallback(() => {
+            (async () => {
+                const m = await dbProvider.getMarker(intId);
+                setMarker(m);
+            })()
+        }, [])
+    );
+
+    useFocusEffect( useCallback(() => {
+        (async () => {
+            const i = await dbProvider.getImages(intId);
+            setImages(i);
+        })()
+    }, []));
 
     const editCoordinates = () => {
         router.push({
             pathname: '/point_chooser/[id]',
             params: {id: intId},
-        })
+        });
     }
     const deleteMarker = () => {
-        setMarkers((markers: any) => markers.filter((marker: any, index: any) => index != intId));
+        // setMarkers((markers: any) => markers.filter((marker: any, index: any) => index != intId));
+        dbProvider.removeMarker(marker?.id ?? -1);
         router.back();
     }
     const pickImageAsync = async () => {
+        if(marker === null){
+            return;
+        }
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
             allowsEditing: true,
@@ -35,24 +57,25 @@ export default function MarkerPage() {
         });
 
         if (!result.canceled) {
-            setMarkers((markers: any) => markers.map((marker: any, index: any) =>
-                index == intId
-                    ? {...marker, images: [...marker.images, {uri: result.assets[0].uri}]}
-                    : marker
-            ));
+            await dbProvider.addImage(marker.id, result.assets[0].uri);
+            const i = await dbProvider.getImages(intId);
+            setImages(i);
         } else {
             alert('You did not select any image.');
         }
     };
 
-
     return (
         <SafeAreaView style={styles.container}>
             <Text>
-                Longitude: {marker.longitude}
-            </Text><Text>
-            Latitude: {marker.latitude}
-        </Text>
+                id: {marker?.id ?? 'loading'}
+            </Text>
+            <Text>
+                Latitude: {marker?.latitude ?? 'loading'}
+            </Text>
+            <Text>
+                Longitude: {marker?.longitude ?? 'loading'}
+            </Text>
             <Pressable onPress={editCoordinates} style={styles.button}>
                 <Text>edit coordinates</Text>
             </Pressable>
@@ -64,10 +87,9 @@ export default function MarkerPage() {
             </Pressable>
             <Text>Long press on image to delete it</Text>
             <FlatList
-                data={marker.images}
-                renderItem={({item, index}) => (
-                    <DeleteableImage markerIndex={intId} imageIndex={index}></DeleteableImage>
-                    //<Image source={item?item:require("../../assets/images/godot_img.png")} key={index} style={styles.image}/>
+                data={images}
+                renderItem={({item}) => (
+                    <DeleteableImage image={item} marker={marker} setImages={setImages}></DeleteableImage>
                 )}>
             </FlatList>
         </SafeAreaView>

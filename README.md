@@ -63,3 +63,39 @@ CSS я знаю плохо, поэтому я особо не настраива
 
 Пытался сделать передачу маркеров, как нибудь через useState в корневом элементе, 
 не получилось, пришлось делать через контекст и переменные в ссылке.
+
+
+### Лаба 2
+
+Структура базы данных
+```
+CREATE TABLE markers (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+latitude REAL NOT NULL,
+longitude REAL NOT NULL,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE marker_images (
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+marker_id INTEGER NOT NULL,
+uri TEXT NOT NULL,
+created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY (marker_id) REFERENCES markers (id) ON DELETE CASCADE
+);
+```
+
+Я создал структуру базу данных на компьютере и положил её в assets.
+Когда приложение устанавливается на телефон оно использует эту базу данных.
+
+Для работы с базой данных использую контекст SQLiteProvider, база данных из которого перехватывается в моём контексте GlobalContext
+В GlobalContext я создаю объект DbProvider, внутри которого находятся все необходимые функции для работы с бд.
+Я использую DbProvider каждый раз когда работаю с базой данных.
+
+
+#### Обработка ошибок
+
+При каждом запросе к бд проверяю запрос на то произошла ли ошибка.
+Если происходит ошибка, то я перекидываю пользователя на отдельную страницу, где говориться что произошла ошибка.
+
+

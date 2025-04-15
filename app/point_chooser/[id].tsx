@@ -8,15 +8,32 @@ import * as Location from 'expo-location';
 import {LocationType, MarkerType} from "@/components/types";
 import {router, useLocalSearchParams} from "expo-router";
 import {init} from "cjs-module-lexer";
+import DbProvider from "@/components/DbProvider";
 
 
 export default function App() {
-    const {markers, setMarkers} = useContext(Context);
+    const dbProvider:DbProvider = useContext(Context) as DbProvider;
+    const [marker, setMarker] = useState<MarkerType|null>(null);
+
     const {id} = useLocalSearchParams();
     const intId = ((id as unknown) as number);
-    const marker = markers[intId];
+    useEffect(() => {
+        (async () => {
+            const m = await dbProvider.getMarker(intId);
+            if(m === true){
+                router.replace({
+                    pathname: '/DatabaseErrorPopup',
+                })
+            }else{
+                setMarker(m);
+            }
+        })()
+    }, []);
+
+
 
     const [initialRegion, setInitialRegion] = useState<LocationType>();
+
 
     if (id == "-1") {
         useEffect(() => {
@@ -39,36 +56,30 @@ export default function App() {
         }, []);
     }else{
         useEffect(()=>{
-            setInitialRegion({
-                latitude: marker.latitude,
-                longitude: marker.longitude,
-                latitudeDelta: 0.922,
-                longitudeDelta: 0.421,
-            });
-        }, [])
+            if(marker !== null){
+                setInitialRegion({
+                    latitude: marker?.latitude ?? 0,
+                    longitude: marker?.longitude ?? 0,
+                    latitudeDelta: 0.922,
+                    longitudeDelta: 0.421,
+                });
+            }
+        }, [marker])
     }
 
 
+
     const handleMapPress = (event: any) => {
-        const {coordinate} = event.nativeEvent;
+        (async () =>{
+            const {coordinate} = event.nativeEvent;
 
-        if (id == "-1") {
-            setMarkers((markers: any) => [...markers, {
-                    longitude: coordinate.longitude,
-                    latitude: coordinate.latitude,
-                    images: [],
-                }]
-            )
-        } else {
-            setMarkers((markers: any) => markers.map((marker: any, index: any) =>
-                index == intId
-                    ? {...marker, latitude: coordinate.latitude, longitude: coordinate.longitude}
-                    : marker
-            ));
-        }
-
-
-        router.back();
+            if (id == "-1") {
+                await dbProvider.addMarker(coordinate.longitude, coordinate.latitude);
+            } else {
+                await dbProvider.updateMarkerPos(intId, coordinate.longitude, coordinate.latitude);
+            }
+            router.back();
+        })();
     }
 
 
@@ -84,8 +95,8 @@ export default function App() {
                     {id != "-1" ?
                         <Marker
                             coordinate={{
-                                latitude: marker.latitude,
-                                longitude: marker.longitude,
+                                latitude: marker?.latitude ?? 0,
+                                longitude: marker?.longitude ?? 0,
                             }}
                         /> :
                         null

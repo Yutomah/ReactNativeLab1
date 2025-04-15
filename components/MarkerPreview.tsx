@@ -6,28 +6,28 @@ import {Link} from "expo-router";
 
 type Props = {
     marker: MarkerType;
-    markerIndex?: number;
 };
 
-export default function MarkerPreview({marker, markerIndex}: Props) {
+export default function MarkerPreview({marker}: Props) {
     return (
-        <View style={styles.container} key={markerIndex ? markerIndex : 0}>
+        <View style={styles.container} key={marker.id ? marker.id : 0}>
             <View>
                 <Text>Latitude {marker.latitude}</Text>
-                <Text>Latitude {marker.longitude}</Text>
+                <Text>Longitude {marker.longitude}</Text>
+                <Text>Id {marker.id}</Text>
                 <Link style={styles.editButton} href={{
                     pathname: '/marker/[id]',
-                    params: {id: (markerIndex as unknown as string)},
+                    params: {id: (marker.id as unknown as string)},
                 }}>
                     <Text style={styles.editText}>Edit</Text>
                 </Link>
             </View>
 
-            {marker.images[0] ?
-                <Image source={marker.images[0]}
-                       style={styles.image}/> :
-                null
-            }
+            {/*{marker.images[0] ?*/}
+            {/*    <Image source={marker.images[0]}*/}
+            {/*           style={styles.image}/> :*/}
+            {/*    null*/}
+            {/*}*/}
 
         </View>
     );

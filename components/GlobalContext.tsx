@@ -1,15 +1,15 @@
+import {SQLiteDatabase, SQLiteProvider, useSQLiteContext} from "expo-sqlite";
 import React, { createContext, useState, useCallback, useMemo } from "react";
-import {MarkerType, ContextType} from "@/components/types";
+import DbProvider from './DbProvider';
 
-
-export const Context = createContext<ContextType>({markers: [], setMarkers: null});
-
+export const Context = createContext<DbProvider|null>(null);
 
 export function GlobalContextProvider({ children }:any){
-    const [markers, setMarkers] = useState<MarkerType[]>([]);
+    const db = useSQLiteContext();
+    const dbProvider = new DbProvider(db);
     return (
-        <Context.Provider value={{ markers, setMarkers }}>
+        <Context.Provider value={dbProvider}>
             {children}
         </Context.Provider>
-    );
+    )
 }

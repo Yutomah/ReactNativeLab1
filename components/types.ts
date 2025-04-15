@@ -1,4 +1,4 @@
-import {ImageSource} from "expo-image";
+
 
 export interface LocationType{
     longitude: number;
@@ -8,13 +8,15 @@ export interface LocationType{
 }
 
 export interface MarkerType {
+    id: number
     longitude: number;
     latitude: number;
-    images: ImageSource[];
+    created_at: string
 }
 
-export interface ContextType {
-    markers: MarkerType[];
-    setMarkers: any;
-
+export interface ImageType{
+    id:number ;
+    marker_id: number;
+    uri:string;
+    created_at:string;
 }

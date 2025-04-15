@@ -5,12 +5,31 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import MapView, {Marker} from "react-native-maps";
 import {Context} from "@/components/GlobalContext";
 import * as Location from 'expo-location';
-import {LocationType} from "@/components/types";
+import {LocationType, MarkerType} from "@/components/types";
+import DbProvider from "@/components/DbProvider";
 import {router} from "expo-router";
+import * as SQLite from 'expo-sqlite';
+import DatabaseErrorPopup from "@/app/DatabaseErrorPopup";
 
 export default function App() {
-    const {markers, setMarkers} = useContext(Context);
+
+    const dbProvider:DbProvider = useContext(Context) as DbProvider;
     const [initialRegion, setInitialRegion] = useState<LocationType>();
+    const [markers, setMarkers] = useState<MarkerType[]>([]);
+
+    useEffect(() => {
+        (async () => {
+            const m = await dbProvider.getMarkers();
+            if(m === true){
+                router.replace({
+                    pathname: '/DatabaseErrorPopup',
+                })
+            }else{
+                setMarkers(m);
+            }
+        })()
+    }, []);
+
 
     useEffect(() => {
         (async () => {
@@ -32,12 +51,20 @@ export default function App() {
 
     const handleMapPress = (event: any) => {
         const {coordinate} = event.nativeEvent;
-        setMarkers((markers: any) => [...markers, {
-                longitude: coordinate.longitude,
-                latitude: coordinate.latitude,
-                images: [],
-            }]
-        )
+        dbProvider.addMarker(coordinate.longitude, coordinate.latitude);
+
+        (async () => {
+            const m = await dbProvider.getMarkers();
+            if(m === true){
+                router.replace({
+                    pathname: '/DatabaseErrorPopup',
+                })
+            }else{
+                setMarkers(m);
+            }
+
+        })();
+
     }
     const handleMarkerPress = (index:number)=>{
         router.push({
@@ -54,10 +81,10 @@ export default function App() {
                     initialRegion={initialRegion}
                     onLongPress={handleMapPress}
                 >
-                    {markers.map((marker, index) =>
+                    {markers.map((marker:MarkerType) =>
                         <Marker
-                            key={index}
-                            onPress={() => handleMarkerPress(index)}
+                            key={marker.id}
+                            onPress={() => handleMarkerPress(marker.id)}
                             coordinate={{
                                 latitude: marker.latitude,
                                 longitude: marker.longitude,
