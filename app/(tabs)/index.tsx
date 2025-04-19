@@ -1,23 +1,27 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useCallback, useContext, useEffect, useState} from 'react';
 // import MapView from 'react-native-maps';
 import {StyleSheet, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import MapView, {Marker} from "react-native-maps";
 import {Context} from "@/components/GlobalContext";
 import * as Location from 'expo-location';
-import {LocationType, MarkerType} from "@/components/types";
+import {LocationType, MarkerType, TempMarkerType} from "@/components/types";
 import DbProvider from "@/components/DbProvider";
-import {router} from "expo-router";
+import {router, useFocusEffect} from "expo-router";
 import * as SQLite from 'expo-sqlite';
 import DatabaseErrorPopup from "@/app/DatabaseErrorPopup";
+import * as Notifications from 'expo-notifications';
+import CloseMarkerHandler from "@/components/CloseMarkerHandler";
 
 export default function App() {
 
     const dbProvider:DbProvider = useContext(Context) as DbProvider;
     const [initialRegion, setInitialRegion] = useState<LocationType>();
     const [markers, setMarkers] = useState<MarkerType[]>([]);
+    const [userMarker, setUserMarker] = useState<TempMarkerType|null>(null);
+    const closeMarkerHandler = new CloseMarkerHandler(dbProvider);
 
-    useEffect(() => {
+    useFocusEffect(useCallback(() => {
         (async () => {
             const m = await dbProvider.getMarkers();
             if(m === true){
@@ -28,7 +32,7 @@ export default function App() {
                 setMarkers(m);
             }
         })()
-    }, []);
+    }, []));
 
 
     useEffect(() => {
@@ -46,6 +50,27 @@ export default function App() {
                 latitudeDelta: 0.922,
                 longitudeDelta: 0.421,
             });
+            setUserMarker(location.coords);
+            let subscription;
+
+            subscription = await Location.watchPositionAsync(
+                {
+                    accuracy: Location.Accuracy.High,
+                    timeInterval: 5000,
+                    distanceInterval: 0,
+                },
+                (newLocation) => {
+                    setUserMarker(location.coords);
+                    closeMarkerHandler.handleNewUserPosition(newLocation.coords);
+                }
+            );
+
+            return () =>{
+                if(subscription){
+                    subscription.remove();
+                }
+            }
+
         })();
     }, []);
 
@@ -91,6 +116,7 @@ export default function App() {
                             }}
                         />)
                     }
+                    {userMarker === null? null : <Marker coordinate={userMarker} pinColor={'blue'}></Marker>}
                 </MapView>
             }
         </SafeAreaView>

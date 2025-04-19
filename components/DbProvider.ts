@@ -23,6 +23,7 @@ export default class DbProvider {
     async getMarker(id: number) {
         try {
             const row = await this.db.getFirstAsync<MarkerType>('SELECT * FROM markers where id = $id', {$id: id});
+
             return row;
         } catch {
             return true;
@@ -50,6 +51,26 @@ export default class DbProvider {
         try {
             await this.db.runAsync('UPDATE markers SET longitude = $longitude, latitude = $latitude WHERE id = $id',
                 {$id: id, $longitude: longitude, $latitude: latitude});
+        } catch {
+            return true;
+        }
+    }
+
+    async updateLastNotifiedAt(id: number) {
+        try {
+            // console.log(id, 'before', await this.getMarker(id));
+            await this.db.runAsync('UPDATE markers SET last_notified_at = CURRENT_TIMESTAMP WHERE id = $id', {$id: id});
+            // console.log(id, 'after', await this.getMarker(id));
+        } catch {
+            return true;
+        }
+    }
+
+    async updateCanNotify(id: number, can_notify:number) {
+        try {
+            console.log(id, 'before', await this.getMarker(id));
+            await this.db.runAsync('UPDATE markers SET can_notify = $can_notify WHERE id = $id', {$id: id, $can_notify: can_notify});
+            console.log(id, 'after', await this.getMarker(id));
         } catch {
             return true;
         }
