@@ -15,6 +15,10 @@ export default function MarkerPreview({marker}: Props) {
                 <Text>Latitude {marker.latitude}</Text>
                 <Text>Longitude {marker.longitude}</Text>
                 <Text>Id {marker.id}</Text>
+                <Text>CanNotify {marker.can_notify}</Text>
+                <Text>LastNotified {marker.last_notified_at}</Text>
+                <Text>CreatedAt {marker.created_at}</Text>
+
                 <Link style={styles.editButton} href={{
                     pathname: '/marker/[id]',
                     params: {id: (marker.id as unknown as string)},

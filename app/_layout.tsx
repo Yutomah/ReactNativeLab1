@@ -8,7 +8,7 @@ import {StrictMode} from 'react';
 
 export default function RootLayout() {
     return (
-        <StrictMode>
+        // <StrictMode>
             <SafeAreaProvider>
                 <SQLiteProvider databaseName={'myMap.db'} assetSource={{assetId: require('../assets/myMap.db')}}>
                     <GlobalContextProvider>
@@ -22,6 +22,6 @@ export default function RootLayout() {
                 </SQLiteProvider>
 
             </SafeAreaProvider>
-        </StrictMode>
+        // </StrictMode>
     );
 }
